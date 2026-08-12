@@ -1,0 +1,35 @@
+## .NET
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
+
+## IDE
+.vs/
+.vscode/
+*.swp
+*~
+
+## Secrets
+appsettings.Development.json
+appsettings.Production.json
+*.pfx
+*.p12
+firebase-credentials.json
+
+## Logs
+logs/
+*.log
+logs-api-*.txt
+
+## Railway local
+.railway/
+
+## OS
+.DS_Store
+Thumbs.db

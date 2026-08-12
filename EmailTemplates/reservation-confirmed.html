@@ -1,0 +1,57 @@
+<!-- subject: Tu reserva en Subite fue confirmada -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reserva confirmada</title>
+</head>
+<body style="margin:0;padding:0;background:#f7f8fa;font-family:Arial,Helvetica,sans-serif;color:#121223;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f7f8fa;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:16px;border:1px solid #ebf0f4;overflow:hidden;">
+          <tr>
+            <td style="padding:28px 28px 12px;text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:#059669;">Subite</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 28px 0;">
+              <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;">¡Hola {{FullName}}!</h1>
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.5;color:#41414f;">
+                Tu reserva fue confirmada. Estos son los detalles del viaje:
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 28px 20px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f7f8fa;border-radius:12px;">
+                <tr>
+                  <td style="padding:16px 18px;font-size:14px;line-height:1.6;">
+                    <strong>Ruta:</strong> {{OriginCity}} → {{DestinationCity}}<br />
+                    <strong>Salida:</strong> {{DepartureDate}}<br />
+                    <strong>Precio por asiento:</strong> {{PricePerSeat}}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 28px 28px;">
+              <a href="{{AppUrl}}" style="display:inline-block;background:#34D399;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:10px;">
+                Ver mis viajes
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 28px 24px;border-top:1px solid #ebf0f4;font-size:12px;color:#babdcc;text-align:center;">
+              © {{Year}} Subite · Viajes compartidos
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

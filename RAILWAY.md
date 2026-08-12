@@ -1,13 +1,13 @@
 # Deploy en Railway (prueba)
 
 ## 1. Repo
-Este proyecto se publica en GitHub y se conecta desde Railway → **Deploy from GitHub**.
+GitHub: `juanpbeloso/covoiturage-api` → Railway **Deploy from GitHub**.
 
-Root directory: raíz de `subite-api` (donde está el `Dockerfile`).
+Root: raíz del repo (donde está el `Dockerfile`).
 
-## 2. Servicios en Railway
-1. **Add PostgreSQL** (plugin).
-2. Servicio **SubiteAPI** (este repo).
+## 2. Servicios
+1. **PostgreSQL**
+2. Servicio API (`covoiturage-api`)
 
 ## 3. Variables del servicio API
 
@@ -16,25 +16,29 @@ Root directory: raíz de `subite-api` (donde está el `Dockerfile`).
 | `ASPNETCORE_ENVIRONMENT` | `Production` |
 | `Database__MigrateOnStartup` | `true` |
 | `EnableSwagger` | `true` (solo mientras probás) |
-| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (referencia al plugin) |
-| `Jwt__Key` | clave larga (≥32 chars), distinta a la local |
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `Jwt__Key` | clave larga (≥32 chars) |
 | `Jwt__Issuer` | `SubiteAPI` |
 | `Jwt__Audience` | `SubiteApp` |
-| `App__BackendUrl` | `https://TU-DOMINIO.up.railway.app` (después de Generate Domain) |
+| `App__BackendUrl` | `https://fearless-unity-production-04ec.up.railway.app` |
 | `App__FrontendUrl` | `subite://` |
-| `MercadoPago__AccessToken` | tu token TEST |
+| `Google__ClientId` | Web Client ID (`….apps.googleusercontent.com`) — misma audiencia del id_token |
+| `Apple__ClientId` | `com.subite.app` (Bundle ID / audience del identity token nativo) |
+| `MercadoPago__AccessToken` | token TEST |
 | `MercadoPago__UseSandbox` | `true` |
 
-Opcional en vez de `DATABASE_URL`:
-
-`ConnectionStrings__DefaultConnection` = connection string Npgsql del Postgres de Railway.
-
 ## 4. Dominio
-Settings → Networking → **Generate Domain**.
+Networking → **Generate Domain**.
 
 Probar:
-- `https://TU-DOMINIO.up.railway.app/health` → `{"status":"ok"}`
-- `https://TU-DOMINIO.up.railway.app/swagger`
+- `/health` → `{"status":"ok"}`
+- `/swagger`
 
-## 5. App mobile
-Actualizar `EXPO_PUBLIC_API_URL` (EAS env `preview` o `.env`) con esa URL HTTPS y rebuild si es IPA.
+## 5. App mobile (EAS preview)
+```text
+EXPO_PUBLIC_API_URL=https://fearless-unity-production-04ec.up.railway.app
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<web client id>
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=<ios client id>
+```
+
+Webhook MP: `https://fearless-unity-production-04ec.up.railway.app/api/payments/webhook`

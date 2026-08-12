@@ -32,6 +32,9 @@ public class SocialLoginDto
 {
     [Required]
     public string IdToken { get; set; } = string.Empty;
+
+    /// <summary>Nombre completo (Apple solo lo envía en el primer sign-in nativo).</summary>
+    public string? FullName { get; set; }
 }
 
 public class RefreshTokenDto

@@ -3,10 +3,15 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
 using SubiteAPI.Data;
 using SubiteAPI.DTOs;
 using SubiteAPI.Exceptions;
 using SubiteAPI.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace SubiteAPI.Services;
 
@@ -130,38 +135,71 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<AuthResponseDto> AppleLoginAsync(string idToken)
+    public async Task<AuthResponseDto> AppleLoginAsync(string idToken, string? fullName = null)
     {
         try
         {
-            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-            var token = handler.ReadJwtToken(idToken);
-
-            var email = token.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
-            var sub = token.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-
-            if (string.IsNullOrEmpty(email) && string.IsNullOrEmpty(sub))
+            var audience = _config["Apple:ClientId"];
+            if (string.IsNullOrWhiteSpace(audience))
             {
                 throw new InvalidTokenException("Apple");
             }
 
-            var userIdentifier = email ?? $"apple_{sub}";
-            var user = await _userManager.FindByEmailAsync(userIdentifier).ConfigureAwait(false);
+            var principal = await ValidateAppleIdentityTokenAsync(idToken, audience).ConfigureAwait(false);
+            var sub = principal.FindFirstValue("sub")
+                ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(sub))
+            {
+                throw new InvalidTokenException("Apple");
+            }
+
+            var email = principal.FindFirstValue("email")
+                ?? principal.FindFirstValue(ClaimTypes.Email);
+
+            var existingLogin = await _userManager.FindByLoginAsync("apple", sub).ConfigureAwait(false);
+            User? user = existingLogin;
+
+            if (user == null && !string.IsNullOrWhiteSpace(email))
+            {
+                user = await _userManager.FindByEmailAsync(email).ConfigureAwait(false);
+            }
 
             if (user == null)
             {
+                var userEmail = !string.IsNullOrWhiteSpace(email)
+                    ? email
+                    : $"apple_{sub}@privaterelay.appleid.local";
+
                 user = new User
                 {
-                    Email = userIdentifier,
-                    UserName = userIdentifier,
-                    FullName = "Usuario Apple",
+                    Email = userEmail,
+                    UserName = userEmail,
+                    FullName = string.IsNullOrWhiteSpace(fullName) ? "Usuario Apple" : fullName.Trim(),
                     EmailConfirmed = true
                 };
 
-                var result = await _userManager.CreateAsync(user).ConfigureAwait(false);
-                if (!result.Succeeded)
+                var create = await _userManager.CreateAsync(user).ConfigureAwait(false);
+                if (!create.Succeeded)
                 {
-                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    var errors = string.Join(", ", create.Errors.Select(e => e.Description));
+                    throw new BusinessException("AUTH_005", errors);
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(fullName)
+                     && (string.IsNullOrWhiteSpace(user.FullName) || user.FullName == "Usuario Apple"))
+            {
+                user.FullName = fullName.Trim();
+            }
+
+            var logins = await _userManager.GetLoginsAsync(user).ConfigureAwait(false);
+            if (!logins.Any(l => l.LoginProvider == "apple" && l.ProviderKey == sub))
+            {
+                var addLogin = await _userManager.AddLoginAsync(
+                    user,
+                    new UserLoginInfo("apple", sub, "Apple")).ConfigureAwait(false);
+                if (!addLogin.Succeeded)
+                {
+                    var errors = string.Join(", ", addLogin.Errors.Select(e => e.Description));
                     throw new BusinessException("AUTH_005", errors);
                 }
             }
@@ -175,10 +213,44 @@ public class AuthService : IAuthService
         {
             throw;
         }
+        catch (SecurityTokenException)
+        {
+            throw new InvalidTokenException("Apple");
+        }
         catch (Exception)
         {
             throw new InvalidTokenException("Apple");
         }
+    }
+
+    private static readonly ConfigurationManager<OpenIdConnectConfiguration> AppleOidc =
+        new(
+            "https://appleid.apple.com/.well-known/openid-configuration",
+            new OpenIdConnectConfigurationRetriever(),
+            new HttpDocumentRetriever());
+
+    private static async Task<ClaimsPrincipal> ValidateAppleIdentityTokenAsync(
+        string idToken,
+        string audience)
+    {
+        var discovery = await AppleOidc.GetConfigurationAsync(CancellationToken.None).ConfigureAwait(false);
+        var parameters = new TokenValidationParameters
+        {
+            ValidIssuer = "https://appleid.apple.com",
+            ValidAudiences = new[] { audience },
+            IssuerSigningKeys = discovery.SigningKeys,
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            NameClaimType = "sub",
+        };
+
+        var handler = new JwtSecurityTokenHandler
+        {
+            MapInboundClaims = false
+        };
+        return handler.ValidateToken(idToken, parameters, out _);
     }
 
     public async Task<AuthResponseDto> RefreshTokenAsync(string refreshToken)

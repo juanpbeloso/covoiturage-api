@@ -7,7 +7,7 @@ public interface IAuthService
     Task<AuthResponseDto> RegisterAsync(RegisterDto dto);
     Task<AuthResponseDto> LoginAsync(LoginDto dto);
     Task<AuthResponseDto> GoogleLoginAsync(string idToken);
-    Task<AuthResponseDto> AppleLoginAsync(string idToken);
+    Task<AuthResponseDto> AppleLoginAsync(string idToken, string? fullName = null);
     Task<AuthResponseDto> RefreshTokenAsync(string refreshToken);
     Task<UserDto> GetProfileAsync(Guid userId);
     Task<UserDto> UpdateProfileAsync(Guid userId, UpdateProfileDto dto);

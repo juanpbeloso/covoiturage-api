@@ -54,7 +54,7 @@ public class AuthController : ControllerBase
     [HttpPost("apple")]
     public async Task<ActionResult<AuthResponseDto>> AppleLogin([FromBody] SocialLoginDto dto)
     {
-        var result = await _authService.AppleLoginAsync(dto.IdToken).ConfigureAwait(false);
+        var result = await _authService.AppleLoginAsync(dto.IdToken, dto.FullName).ConfigureAwait(false);
         return Ok(result);
     }
 

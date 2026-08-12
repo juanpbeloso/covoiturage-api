@@ -12,10 +12,12 @@ namespace SubiteAPI.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IPasswordResetService _passwordReset;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, IPasswordResetService passwordReset)
     {
         _authService = authService;
+        _passwordReset = passwordReset;
     }
 
     /// <summary>
@@ -56,6 +58,34 @@ public class AuthController : ControllerBase
     {
         var result = await _authService.AppleLoginAsync(dto.IdToken, dto.FullName).ConfigureAwait(false);
         return Ok(result);
+    }
+
+    /// <summary>Solicita un código de 6 dígitos por email para resetear la contraseña.</summary>
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        await _passwordReset.RequestCodeAsync(dto).ConfigureAwait(false);
+        return Ok(new
+        {
+            success = true,
+            message = "Si el correo existe, te enviamos un código para restablecer la contraseña."
+        });
+    }
+
+    /// <summary>Valida el código recibido por email (sin cambiar la contraseña todavía).</summary>
+    [HttpPost("verify-reset-code")]
+    public async Task<IActionResult> VerifyResetCode([FromBody] VerifyResetCodeDto dto)
+    {
+        await _passwordReset.VerifyCodeAsync(dto).ConfigureAwait(false);
+        return Ok(new { success = true, message = "Código válido." });
+    }
+
+    /// <summary>Cambia la contraseña usando email + código válidos.</summary>
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        await _passwordReset.ResetPasswordAsync(dto).ConfigureAwait(false);
+        return Ok(new { success = true, message = "Contraseña actualizada. Ya podés iniciar sesión." });
     }
 
     /// <summary>

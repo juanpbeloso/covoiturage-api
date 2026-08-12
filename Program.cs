@@ -69,6 +69,7 @@ builder.Services.AddAuthentication(options =>
 
 // ========== SERVICES ==========
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IRideService, RideService>();

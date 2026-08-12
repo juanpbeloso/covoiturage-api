@@ -22,6 +22,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<PasswordResetCode> PasswordResetCodes => Set<PasswordResetCode>();
+    public DbSet<EmailVerificationCode> EmailVerificationCodes => Set<EmailVerificationCode>();
     public DbSet<PricingConfig> PricingConfigs => Set<PricingConfig>();
     public DbSet<ReferencePrice> ReferencePrices => Set<ReferencePrice>();
 
@@ -200,6 +201,16 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
         });
 
         builder.Entity<PasswordResetCode>(e =>
+        {
+            e.HasIndex(c => new { c.UserId, c.ExpiresAt });
+            e.Property(c => c.CodeHash).HasMaxLength(128);
+            e.HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<EmailVerificationCode>(e =>
         {
             e.HasIndex(c => new { c.UserId, c.ExpiresAt });
             e.Property(c => c.CodeHash).HasMaxLength(128);

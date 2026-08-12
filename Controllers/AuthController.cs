@@ -13,11 +13,16 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IPasswordResetService _passwordReset;
+    private readonly IEmailVerificationService _emailVerification;
 
-    public AuthController(IAuthService authService, IPasswordResetService passwordReset)
+    public AuthController(
+        IAuthService authService,
+        IPasswordResetService passwordReset,
+        IEmailVerificationService emailVerification)
     {
         _authService = authService;
         _passwordReset = passwordReset;
+        _emailVerification = emailVerification;
     }
 
     /// <summary>
@@ -86,6 +91,26 @@ public class AuthController : ControllerBase
     {
         await _passwordReset.ResetPasswordAsync(dto).ConfigureAwait(false);
         return Ok(new { success = true, message = "Contraseña actualizada. Ya podés iniciar sesión." });
+    }
+
+    /// <summary>Valida el código de 6 dígitos enviado al registrarse.</summary>
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto dto)
+    {
+        await _emailVerification.VerifyCodeAsync(dto).ConfigureAwait(false);
+        return Ok(new { success = true, message = "Email verificado." });
+    }
+
+    /// <summary>Reenvía el código de verificación de email.</summary>
+    [HttpPost("resend-verification")]
+    public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationDto dto)
+    {
+        await _emailVerification.ResendCodeAsync(dto).ConfigureAwait(false);
+        return Ok(new
+        {
+            success = true,
+            message = "Si el correo existe, te enviamos un nuevo código."
+        });
     }
 
     /// <summary>

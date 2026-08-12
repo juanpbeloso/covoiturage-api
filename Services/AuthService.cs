@@ -30,19 +30,25 @@ public class AuthService : IAuthService
     private readonly IConfiguration _config;
     private readonly AppDbContext _db;
     private readonly IWebHostEnvironment _env;
+    private readonly IEmailVerificationService _emailVerification;
+    private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         UserManager<User> userManager,
         IJwtService jwtService,
         IConfiguration config,
         AppDbContext db,
-        IWebHostEnvironment env)
+        IWebHostEnvironment env,
+        IEmailVerificationService emailVerification,
+        ILogger<AuthService> logger)
     {
         _userManager = userManager;
         _jwtService = jwtService;
         _config = config;
         _db = db;
         _env = env;
+        _emailVerification = emailVerification;
+        _logger = logger;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
@@ -58,7 +64,8 @@ public class AuthService : IAuthService
             Email = dto.Email,
             UserName = dto.Email,
             FullName = dto.FullName,
-            PhoneNumber = dto.Phone
+            PhoneNumber = dto.Phone,
+            EmailConfirmed = false
         };
 
         var result = await _userManager.CreateAsync(user, dto.Password).ConfigureAwait(false);
@@ -67,6 +74,15 @@ public class AuthService : IAuthService
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
             throw new BusinessException("AUTH_005", errors);
+        }
+
+        try
+        {
+            await _emailVerification.SendCodeAsync(user).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Registro ok pero falló el envío del código a {Email}", user.Email);
         }
 
         return await CreateAuthResponseAsync(user).ConfigureAwait(false);

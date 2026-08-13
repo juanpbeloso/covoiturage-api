@@ -30,8 +30,16 @@ Root: raíz del repo (donde está el `Dockerfile`).
 | `EnvialoSimple__ApiKey` | API key de EnvialoSimple |
 | `EnvialoSimple__FromEmail` | email remitente verificado |
 | `EnvialoSimple__FromName` | `Subite` (opcional) |
+| `Admin__Email` | email del admin inicial (ej. `admin@subiteapp.com.ar`) |
+| `Admin__Password` | contraseña del admin (cambiar en producción) |
+| `Admin__FullName` | `Administrador Subite` (opcional) |
 
-### Reset de contraseña
+### Panel admin
+Login: `POST /admin/auth/login` (usuario con rol `Admin`).
+Comisión editable: `GET/PUT /admin/settings` y `/admin/settings/commission`.
+Pricing mutaciones requieren JWT admin en `/api/pricing-config` y `/api/reference-prices`.
+
+Si `Database__MigrateOnStartup=true`, el redeploy crea admin seed + tabla `PlatformSettings`.
 Flujo: `POST /api/auth/forgot-password` → código 6 dígitos por email → `verify-reset-code` → `reset-password`.
 
 Con `Database__MigrateOnStartup=true`, el redeploy crea la tabla `PasswordResetCodes`.

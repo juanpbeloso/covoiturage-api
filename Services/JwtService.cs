@@ -16,20 +16,28 @@ public class JwtService : IJwtService
         _config = config;
     }
 
-    public string GenerateAccessToken(User user)
+    public string GenerateAccessToken(User user, IEnumerable<string>? roles = null)
     {
         var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email ?? ""),
-            new Claim(ClaimTypes.Name, user.FullName),
-            new Claim("isVerified", user.IsVerified.ToString()),
-            new Claim("isDriver", user.IsDriver.ToString())
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Email, user.Email ?? ""),
+            new(ClaimTypes.Name, user.FullName),
+            new("isVerified", user.IsVerified.ToString()),
+            new("isDriver", user.IsDriver.ToString())
         };
+
+        if (roles != null)
+        {
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+        }
 
         var expireMinutes = int.Parse(_config["Jwt:ExpireMinutes"] ?? "60");
 

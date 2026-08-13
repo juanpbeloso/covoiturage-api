@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SubiteAPI.Features.TripPricing.Domain.Models;
 using SubiteAPI.Features.TripPricing.Services;
+using SubiteAPI.Models;
 
 namespace SubiteAPI.Features.TripPricing.Controllers;
 
@@ -37,6 +39,7 @@ public class PricingConfigController : ControllerBase
 
     /// <summary>Crea una nueva configuración de pricing.</summary>
     [HttpPost]
+    [Authorize(Roles = AppRoles.Admin)]
     [ProducesResponseType(typeof(PricingConfig), StatusCodes.Status201Created)]
     public async Task<ActionResult<PricingConfig>> Create([FromBody] PricingConfig config)
     {
@@ -46,6 +49,7 @@ public class PricingConfigController : ControllerBase
 
     /// <summary>Actualiza una configuración existente.</summary>
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ProducesResponseType(typeof(PricingConfig), StatusCodes.Status200OK)]
     public async Task<ActionResult<PricingConfig>> Update(Guid id, [FromBody] PricingConfig config)
     {
@@ -55,6 +59,7 @@ public class PricingConfigController : ControllerBase
 
     /// <summary>Activa una configuración (desactiva las demás).</summary>
     [HttpPut("{id:guid}/activate")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Activate(Guid id)
     {

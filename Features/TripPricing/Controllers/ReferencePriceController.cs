@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SubiteAPI.Features.TripPricing.Domain.Models;
 using SubiteAPI.Features.TripPricing.Services;
+using SubiteAPI.Models;
 
 namespace SubiteAPI.Features.TripPricing.Controllers;
 
@@ -28,6 +30,7 @@ public class ReferencePriceController : ControllerBase
 
     /// <summary>Carga manualmente un precio de referencia.</summary>
     [HttpPost]
+    [Authorize(Roles = AppRoles.Admin)]
     [ProducesResponseType(typeof(ReferencePrice), StatusCodes.Status201Created)]
     public async Task<ActionResult<ReferencePrice>> Create([FromBody] ReferencePrice price)
     {
@@ -37,6 +40,7 @@ public class ReferencePriceController : ControllerBase
 
     /// <summary>Actualiza un precio de referencia.</summary>
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ProducesResponseType(typeof(ReferencePrice), StatusCodes.Status200OK)]
     public async Task<ActionResult<ReferencePrice>> Update(Guid id, [FromBody] ReferencePrice price)
     {
@@ -46,6 +50,7 @@ public class ReferencePriceController : ControllerBase
 
     /// <summary>Elimina (soft delete) un precio de referencia.</summary>
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Delete(Guid id)
     {

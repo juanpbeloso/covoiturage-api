@@ -23,6 +23,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<PasswordResetCode> PasswordResetCodes => Set<PasswordResetCode>();
     public DbSet<EmailVerificationCode> EmailVerificationCodes => Set<EmailVerificationCode>();
+    public DbSet<PlatformSettings> PlatformSettings => Set<PlatformSettings>();
     public DbSet<PricingConfig> PricingConfigs => Set<PricingConfig>();
     public DbSet<ReferencePrice> ReferencePrices => Set<ReferencePrice>();
 

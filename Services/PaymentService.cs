@@ -16,6 +16,7 @@ public class PaymentService : IPaymentService
     private readonly IReservationService _reservationService;
     private readonly IMercadoPagoService _mercadoPago;
     private readonly INotificationService _notifications;
+    private readonly IPlatformSettingsService _platformSettings;
     private readonly MercadoPagoOptions _mpOptions;
     private readonly AppOptions _appOptions;
 
@@ -24,6 +25,7 @@ public class PaymentService : IPaymentService
         IReservationService reservationService,
         IMercadoPagoService mercadoPago,
         INotificationService notifications,
+        IPlatformSettingsService platformSettings,
         IOptions<MercadoPagoOptions> mpOptions,
         IOptions<AppOptions> appOptions)
     {
@@ -31,6 +33,7 @@ public class PaymentService : IPaymentService
         _reservationService = reservationService;
         _mercadoPago = mercadoPago;
         _notifications = notifications;
+        _platformSettings = platformSettings;
         _mpOptions = mpOptions.Value;
         _appOptions = appOptions.Value;
     }
@@ -84,7 +87,8 @@ public class PaymentService : IPaymentService
                 .ConfigureAwait(false);
 
             var baseAmount = reservation.TotalPrice;
-            var commission = Math.Round(baseAmount * _mpOptions.PlatformCommissionRate, 0);
+            var commissionRate = await _platformSettings.GetCommissionRateAsync().ConfigureAwait(false);
+            var commission = Math.Round(baseAmount * commissionRate, 0);
             var totalAmount = baseAmount + commission;
 
             var preference = await _mercadoPago.CreateCheckoutPreferenceAsync(

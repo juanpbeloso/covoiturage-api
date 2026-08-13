@@ -9,6 +9,7 @@ using SubiteAPI.Features.Email.Options;
 using SubiteAPI.Features.Email.Services;
 using SubiteAPI.Features.TripPricing.Domain;
 using SubiteAPI.Features.TripPricing.Infrastructure;
+using SubiteAPI.Infrastructure;
 using SubiteAPI.Features.TripPricing.Infrastructure.Repositories;
 using SubiteAPI.Features.TripPricing.Services;
 using SubiteAPI.Middleware;
@@ -71,6 +72,9 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IEmailVerificationService, EmailVerificationService>();
+builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
+builder.Services.AddScoped<IPlatformSettingsService, PlatformSettingsService>();
+builder.Services.Configure<AdminOptions>(builder.Configuration.GetSection(AdminOptions.SectionName));
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IRideService, RideService>();
@@ -196,6 +200,11 @@ if (migrateOnStartup)
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync().ConfigureAwait(false);
     await PricingDataSeeder.SeedAsync(db).ConfigureAwait(false);
+
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+    var adminOptions = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<AdminOptions>>();
+    await AdminDataSeeder.SeedAsync(db, userManager, roleManager, adminOptions).ConfigureAwait(false);
 }
 
 app.Run();

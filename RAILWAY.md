@@ -24,8 +24,20 @@ Root: raíz del repo (donde está el `Dockerfile`).
 | `App__FrontendUrl` | `subite://` |
 | `Google__ClientId` | Web Client ID (`….apps.googleusercontent.com`) — misma audiencia del id_token |
 | `Apple__ClientId` | `com.subite.app` (Bundle ID / audience del identity token nativo) |
-| `MercadoPago__AccessToken` | token TEST |
+| `MercadoPago__AccessToken` | token de la **aplicación marketplace** (Subite) |
+| `MercadoPago__ClientId` | Application ID (OAuth) |
+| `MercadoPago__ClientSecret` | Client Secret (OAuth) |
+| `MercadoPago__RedirectUri` | `https://<api>/api/conductores/mercadopago/callback` (debe coincidir en MP) |
 | `MercadoPago__UseSandbox` | `true` |
+| `MercadoPago__PaymentMode` | `wallet_only` o `all` |
+
+### Split de pagos (marketplace 1:1)
+- El conductor conecta su MP vía `GET /api/conductores/mercadopago/conectar`.
+- Las preferencias se crean con el **AccessToken del conductor** + `marketplace_fee` = comisión de Subite (`PlatformSettings`, default 12,5%).
+- El pasajero sigue viendo Checkout Pro normal.
+- Sin cuenta MP conectada: no se puede publicar viaje ni cobrar reservas.
+
+### Reset de contraseña
 | `EnvialoSimple__Enabled` | `true` (o `false` en pruebas: el código sale en logs Railway) |
 | `EnvialoSimple__ApiKey` | API key de EnvialoSimple |
 | `EnvialoSimple__FromEmail` | email remitente verificado |

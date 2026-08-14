@@ -24,6 +24,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<PasswordResetCode> PasswordResetCodes => Set<PasswordResetCode>();
     public DbSet<EmailVerificationCode> EmailVerificationCodes => Set<EmailVerificationCode>();
     public DbSet<PlatformSettings> PlatformSettings => Set<PlatformSettings>();
+    public DbSet<ConductorMercadoPago> ConductorMercadoPagos => Set<ConductorMercadoPago>();
     public DbSet<PricingConfig> PricingConfigs => Set<PricingConfig>();
     public DbSet<ReferencePrice> ReferencePrices => Set<ReferencePrice>();
 
@@ -218,6 +219,18 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
             e.HasOne(c => c.User)
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ConductorMercadoPago>(e =>
+        {
+            e.HasIndex(c => c.ConductorId).IsUnique();
+            e.Property(c => c.MpUserId).HasMaxLength(64);
+            e.Property(c => c.AccessToken).HasMaxLength(2048);
+            e.Property(c => c.RefreshToken).HasMaxLength(2048);
+            e.HasOne(c => c.Conductor)
+                .WithMany()
+                .HasForeignKey(c => c.ConductorId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

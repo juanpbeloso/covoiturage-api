@@ -81,6 +81,11 @@ builder.Services.AddScoped<IRideService, RideService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IMercadoPagoService, MercadoPagoService>();
+builder.Services.AddScoped<IMercadoPagoTokenService, MercadoPagoTokenService>();
+builder.Services.AddHttpClient("MercadoPagoOAuth", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 builder.Services.AddHostedService<PendingCheckoutExpiryService>();
 builder.Services.Configure<MercadoPagoOptions>(builder.Configuration.GetSection(MercadoPagoOptions.SectionName));
 builder.Services.Configure<AppOptions>(builder.Configuration.GetSection(AppOptions.SectionName));

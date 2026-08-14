@@ -1,3 +1,4 @@
+using MercadoPago.Client;
 using MercadoPago.Client.Payment;
 using MercadoPago.Client.Preference;
 using MercadoPago.Config;
@@ -19,6 +20,7 @@ public class MercadoPagoService : IMercadoPagoService
     public MercadoPagoService(IOptions<MercadoPagoOptions> options)
     {
         _options = options.Value;
+        // Token de la app marketplace: consultas de pago / webhook.
         if (IsConfigured)
         {
             MercadoPagoConfig.AccessToken = _options.AccessToken;
@@ -34,12 +36,27 @@ public class MercadoPagoService : IMercadoPagoService
         Ride ride,
         User passenger,
         decimal totalAmount,
+        decimal marketplaceFee,
+        string sellerAccessToken,
         string successUrl,
         string failureUrl,
         string pendingUrl,
         string notificationUrl)
     {
-        EnsureConfigured();
+        if (string.IsNullOrWhiteSpace(sellerAccessToken))
+        {
+            throw new BusinessException(
+                "MP_SELLER_001",
+                "El conductor no tiene una cuenta de MercadoPago conectada.",
+                409);
+        }
+
+        if (marketplaceFee < 0 || marketplaceFee >= totalAmount)
+        {
+            throw new BusinessException(
+                "MP_FEE_001",
+                "La comisión de marketplace es inválida para este pago.");
+        }
 
         var client = new PreferenceClient();
         var title = $"Viaje: {ride.OriginCity} → {ride.DestinationCity}";
@@ -64,7 +81,8 @@ public class MercadoPagoService : IMercadoPagoService
                 Name = passenger.FullName
             },
             ExternalReference = reservation.Id.ToString(),
-            // Webhook IPN: MP exige HTTPS público; en local se omite y se usa sync/polling.
+            // Split 1:1: el cobro va a la cuenta del conductor; Subite recibe marketplace_fee.
+            MarketplaceFee = marketplaceFee,
             NotificationUrl = PaymentUrlHelper.IsHttpsUrl(notificationUrl) ? notificationUrl : null,
             StatementDescriptor = "SUBITE"
         };
@@ -101,9 +119,14 @@ public class MercadoPagoService : IMercadoPagoService
             };
         }
 
+        var requestOptions = new RequestOptions
+        {
+            AccessToken = sellerAccessToken
+        };
+
         try
         {
-            return await client.CreateAsync(request).ConfigureAwait(false);
+            return await client.CreateAsync(request, requestOptions).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

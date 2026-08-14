@@ -71,6 +71,7 @@ public class UserDto
     public bool EmailVerified { get; set; }
     public bool PhoneVerified { get; set; }
     public bool IsDriver { get; set; }
+    public bool MercadoPagoConnected { get; set; }
     public decimal Rating { get; set; }
     public int ReviewsCount { get; set; }
     public int TripsAsDriver { get; set; }

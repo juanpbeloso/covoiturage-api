@@ -17,6 +17,7 @@ public class PaymentService : IPaymentService
     private readonly IMercadoPagoService _mercadoPago;
     private readonly INotificationService _notifications;
     private readonly IPlatformSettingsService _platformSettings;
+    private readonly IMercadoPagoTokenService _mpTokens;
     private readonly MercadoPagoOptions _mpOptions;
     private readonly AppOptions _appOptions;
 
@@ -26,6 +27,7 @@ public class PaymentService : IPaymentService
         IMercadoPagoService mercadoPago,
         INotificationService notifications,
         IPlatformSettingsService platformSettings,
+        IMercadoPagoTokenService mpTokens,
         IOptions<MercadoPagoOptions> mpOptions,
         IOptions<AppOptions> appOptions)
     {
@@ -34,6 +36,7 @@ public class PaymentService : IPaymentService
         _mercadoPago = mercadoPago;
         _notifications = notifications;
         _platformSettings = platformSettings;
+        _mpTokens = mpTokens;
         _mpOptions = mpOptions.Value;
         _appOptions = appOptions.Value;
     }
@@ -86,9 +89,14 @@ public class PaymentService : IPaymentService
                 .FirstAsync(r => r.Id == reservationDto.Id)
                 .ConfigureAwait(false);
 
+            var sellerToken = await _mpTokens
+                .GetValidAccessTokenAsync(reservation.Ride.DriverId)
+                .ConfigureAwait(false);
+
             var baseAmount = reservation.TotalPrice;
             var commissionRate = await _platformSettings.GetCommissionRateAsync().ConfigureAwait(false);
             var commission = Math.Round(baseAmount * commissionRate, 0);
+            // Split 1:1: el pasajero paga base+comisión; marketplace_fee = comisión de Subite.
             var totalAmount = baseAmount + commission;
 
             var preference = await _mercadoPago.CreateCheckoutPreferenceAsync(
@@ -96,6 +104,8 @@ public class PaymentService : IPaymentService
                 reservation.Ride,
                 reservation.Passenger,
                 totalAmount,
+                commission,
+                sellerToken,
                 successUrl,
                 failureUrl,
                 pendingUrl,

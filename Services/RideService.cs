@@ -10,10 +10,12 @@ namespace SubiteAPI.Services;
 public class RideService : IRideService
 {
     private readonly AppDbContext _db;
+    private readonly IMercadoPagoTokenService _mpTokens;
 
-    public RideService(AppDbContext db)
+    public RideService(AppDbContext db, IMercadoPagoTokenService mpTokens)
     {
         _db = db;
+        _mpTokens = mpTokens;
     }
 
     public async Task<RideDto> CreateAsync(Guid driverId, CreateRideDto dto)
@@ -21,6 +23,14 @@ public class RideService : IRideService
         if (dto.DepartureDateTime <= DateTime.UtcNow)
         {
             throw new BusinessException("RIDE_005", "La fecha de salida debe ser futura.", 400);
+        }
+
+        if (!await _mpTokens.IsConnectedAsync(driverId).ConfigureAwait(false))
+        {
+            throw new BusinessException(
+                "MP_SELLER_001",
+                "Conectá tu cuenta de MercadoPago en el perfil para poder publicar viajes y recibir pagos.",
+                409);
         }
 
         var vehicle = await _db.Vehicles

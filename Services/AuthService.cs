@@ -298,7 +298,7 @@ public class AuthService : IAuthService
         var user = await _userManager.FindByIdAsync(userId.ToString()).ConfigureAwait(false)
             ?? throw new UserNotFoundException(userId.ToString());
 
-        return MapUser(user);
+        return await MapUserAsync(user).ConfigureAwait(false);
     }
 
     public async Task<UserDto> UpdateProfileAsync(Guid userId, UpdateProfileDto dto)
@@ -318,7 +318,7 @@ public class AuthService : IAuthService
             throw new BusinessException("AUTH_007", errors);
         }
 
-        return MapUser(user);
+        return await MapUserAsync(user).ConfigureAwait(false);
     }
 
     public async Task<UserDto> UploadAvatarAsync(Guid userId, IFormFile file)
@@ -371,7 +371,7 @@ public class AuthService : IAuthService
             throw new BusinessException("AUTH_007", errors);
         }
 
-        return MapUser(user);
+        return await MapUserAsync(user).ConfigureAwait(false);
     }
 
     public async Task<PublicDriverProfileDto> GetPublicDriverProfileAsync(Guid userId)
@@ -406,26 +406,34 @@ public class AuthService : IAuthService
             Success = true,
             AccessToken = accessToken,
             RefreshToken = refreshToken,
-            User = MapUser(user)
+            User = await MapUserAsync(user).ConfigureAwait(false)
         };
     }
 
-    private static UserDto MapUser(User user) => new()
+    private async Task<UserDto> MapUserAsync(User user)
     {
-        Id = user.Id,
-        Email = user.Email ?? "",
-        FullName = user.FullName,
-        Phone = user.PhoneNumber,
-        ProfileImageUrl = user.ProfileImageUrl,
-        IsVerified = user.IsVerified,
-        EmailVerified = user.EmailConfirmed,
-        PhoneVerified = user.PhoneNumberConfirmed,
-        IsDriver = user.IsDriver,
-        Rating = user.Rating,
-        ReviewsCount = user.ReviewsCount,
-        TripsAsDriver = user.TripsAsDriver,
-        TripsAsPassenger = user.TripsAsPassenger
-    };
+        var mpConnected = await _db.ConductorMercadoPagos.AsNoTracking()
+            .AnyAsync(c => c.ConductorId == user.Id)
+            .ConfigureAwait(false);
+
+        return new UserDto
+        {
+            Id = user.Id,
+            Email = user.Email ?? "",
+            FullName = user.FullName,
+            Phone = user.PhoneNumber,
+            ProfileImageUrl = user.ProfileImageUrl,
+            IsVerified = user.IsVerified,
+            EmailVerified = user.EmailConfirmed,
+            PhoneVerified = user.PhoneNumberConfirmed,
+            IsDriver = user.IsDriver,
+            MercadoPagoConnected = mpConnected,
+            Rating = user.Rating,
+            ReviewsCount = user.ReviewsCount,
+            TripsAsDriver = user.TripsAsDriver,
+            TripsAsPassenger = user.TripsAsPassenger
+        };
+    }
 
     private static PublicDriverProfileDto MapPublicDriver(User user) => new()
     {

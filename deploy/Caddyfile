@@ -1,0 +1,11 @@
+api.subiteapp.com.ar {
+	reverse_proxy api:8080
+}
+
+admin.subiteapp.com.ar {
+	reverse_proxy admin:3000
+}
+
+subiteapp.com.ar, www.subiteapp.com.ar {
+	redir https://admin.subiteapp.com.ar{uri}
+}

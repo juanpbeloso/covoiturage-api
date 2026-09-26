@@ -470,5 +470,6 @@ public class PaymentService : IPaymentService
     };
 
     private bool IsSandboxToken() =>
+        _mpOptions.UseSandbox ||
         _mpOptions.AccessToken.StartsWith("TEST-", StringComparison.OrdinalIgnoreCase);
 }

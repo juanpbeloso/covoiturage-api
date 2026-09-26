@@ -330,8 +330,7 @@ public class PaymentService : IPaymentService
 
     private void ValidatePaymentMethod(MpPayment mpPayment)
     {
-        if (!_mpOptions.PaymentMode.Equals("wallet_only", StringComparison.OrdinalIgnoreCase) ||
-            IsSandboxToken())
+        if (!_mpOptions.PaymentMode.Equals("wallet_only", StringComparison.OrdinalIgnoreCase))
         {
             return;
         }

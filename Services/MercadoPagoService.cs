@@ -101,10 +101,7 @@ public class MercadoPagoService : IMercadoPagoService
             request.AutoReturn = "approved";
         }
 
-        // wallet_only solo en producción. En sandbox MP suele deshabilitar
-        // "dinero en cuenta" si el comprador no es un TESTUSER con saldo;
-        // excluir tarjetas deja el checkout sin ningún medio usable.
-        if (IsWalletOnlyMode() && !IsSandbox())
+        if (IsWalletOnlyMode())
         {
             request.Purpose = "wallet_purchase";
             request.PaymentMethods = new PreferencePaymentMethodsRequest
@@ -187,8 +184,4 @@ public class MercadoPagoService : IMercadoPagoService
 
     private bool IsWalletOnlyMode() =>
         string.Equals(_options.PaymentMode, "wallet_only", StringComparison.OrdinalIgnoreCase);
-
-    private bool IsSandbox() =>
-        _options.UseSandbox ||
-        _options.AccessToken.StartsWith("TEST-", StringComparison.OrdinalIgnoreCase);
 }

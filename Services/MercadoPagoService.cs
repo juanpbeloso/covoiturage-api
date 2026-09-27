@@ -75,17 +75,26 @@ public class MercadoPagoService : IMercadoPagoService
                     UnitPrice = totalAmount
                 }
             ],
-            Payer = new PreferencePayerRequest
-            {
-                Email = passenger.Email,
-                Name = passenger.FullName
-            },
             ExternalReference = reservation.Id.ToString(),
-            // Split 1:1: el cobro va a la cuenta del conductor; Subite recibe marketplace_fee.
-            MarketplaceFee = marketplaceFee,
             NotificationUrl = PaymentUrlHelper.IsHttpsUrl(notificationUrl) ? notificationUrl : null,
             StatementDescriptor = "SUBITE"
         };
+
+        // En sandbox el fee va a la cuenta dueña de la app (producción).
+        // MP rechaza ese split con plata ficticia → "Oh, no, algo anduvo mal".
+        if (!IsSandbox() && marketplaceFee > 0)
+        {
+            request.MarketplaceFee = marketplaceFee;
+        }
+
+        if (!IsSandbox())
+        {
+            request.Payer = new PreferencePayerRequest
+            {
+                Email = passenger.Email,
+                Name = passenger.FullName
+            };
+        }
 
         if ((PaymentUrlHelper.IsHttpsUrl(successUrl) || PaymentUrlHelper.IsAppDeepLink(successUrl)) &&
             (PaymentUrlHelper.IsHttpsUrl(failureUrl) || PaymentUrlHelper.IsAppDeepLink(failureUrl)) &&
@@ -184,4 +193,8 @@ public class MercadoPagoService : IMercadoPagoService
 
     private bool IsWalletOnlyMode() =>
         string.Equals(_options.PaymentMode, "wallet_only", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsSandbox() =>
+        _options.UseSandbox ||
+        _options.AccessToken.StartsWith("TEST-", StringComparison.OrdinalIgnoreCase);
 }

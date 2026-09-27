@@ -55,6 +55,15 @@ public class PaymentService : IPaymentService
         var failureUrl = PaymentUrlHelper.BuildAppReturnUrl(appBase, "payments/return/failure");
         var pendingUrl = PaymentUrlHelper.BuildAppReturnUrl(appBase, "payments/return/pending");
 
+        // Sandbox web no banca bien deep links subite:// (error "algo anduvo mal").
+        if (IsSandboxToken() && PaymentUrlHelper.IsHttpsUrl(_appOptions.BackendUrl))
+        {
+            var apiBase = _appOptions.BackendUrl.TrimEnd('/');
+            successUrl = $"{apiBase}/api/payments/return/success";
+            failureUrl = $"{apiBase}/api/payments/return/failure";
+            pendingUrl = $"{apiBase}/api/payments/return/pending";
+        }
+
         // Si el cliente pide retorno web explícito (HTTPS), respetarlo (flujo browser).
         if (PaymentUrlHelper.IsHttpsUrl(dto.ReturnBaseUrl))
         {

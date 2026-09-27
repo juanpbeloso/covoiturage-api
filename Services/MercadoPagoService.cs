@@ -128,9 +128,16 @@ public class MercadoPagoService : IMercadoPagoService
             };
         }
 
+        // Sandbox: la preferencia tiene que crearse con el Access Token de PRUEBA
+        // de la app (vendedor test 3111235574). El token OAuth del conductor
+        // sale del Client ID de producción y MP revienta el checkout sandbox.
+        var tokenForPreference = IsSandbox() && !string.IsNullOrWhiteSpace(_options.AccessToken)
+            ? _options.AccessToken
+            : sellerAccessToken;
+
         var requestOptions = new RequestOptions
         {
-            AccessToken = sellerAccessToken
+            AccessToken = tokenForPreference
         };
 
         try

@@ -88,6 +88,7 @@ builder.Services.AddHttpClient("MercadoPagoOAuth", client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 builder.Services.AddHostedService<PendingCheckoutExpiryService>();
+builder.Services.AddHostedService<RideLifecycleService>();
 builder.Services.Configure<MercadoPagoOptions>(builder.Configuration.GetSection(MercadoPagoOptions.SectionName));
 builder.Services.Configure<AppOptions>(builder.Configuration.GetSection(AppOptions.SectionName));
 builder.Services.Configure<DiditOptions>(builder.Configuration.GetSection(DiditOptions.SectionName));
@@ -119,6 +120,12 @@ builder.Services.AddHttpClient<IGeorefService, GeorefService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+builder.Services.Configure<GoogleMapsOptions>(builder.Configuration.GetSection(GoogleMapsOptions.SectionName));
+builder.Services.AddHttpClient("GoogleMaps", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(12);
+});
+builder.Services.AddScoped<IMapsDirectionsService, MapsDirectionsService>();
 // builder.Services.AddScoped<IMercadoPagoService, MercadoPagoService>();
 // builder.Services.AddScoped<IFirebaseService, FirebaseService>();
 // builder.Services.AddScoped<IStorageService, StorageService>();

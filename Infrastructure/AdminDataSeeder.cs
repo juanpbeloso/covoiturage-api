@@ -57,6 +57,9 @@ public static class AdminDataSeeder
             {
                 Id = 1,
                 PlatformCommissionRate = 0.125m,
+                MapsDirectionsEnabled = true,
+                MapsMonthlyRequestCap = 10000,
+                MapsPricePerThousandUsd = 5.00m,
                 UpdatedAt = DateTime.UtcNow
             });
             await db.SaveChangesAsync().ConfigureAwait(false);

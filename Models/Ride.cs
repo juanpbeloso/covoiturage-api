@@ -8,10 +8,10 @@ public enum RideStatus
     /// <summary>Sin asientos libres; sigue programado.</summary>
     Full,
 
-    /// <summary>El viaje ya comenzó (salida alcanzada). Futuro: transición automática.</summary>
+    /// <summary>El viaje ya comenzó (salida alcanzada).</summary>
     InProgress,
 
-    /// <summary>Viaje finalizado. Futuro: transición automática al llegar.</summary>
+    /// <summary>Viaje finalizado (llegada estimada alcanzada).</summary>
     Completed,
 
     /// <summary>Cancelado por el conductor (o sistema).</summary>

@@ -24,6 +24,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<PasswordResetCode> PasswordResetCodes => Set<PasswordResetCode>();
     public DbSet<EmailVerificationCode> EmailVerificationCodes => Set<EmailVerificationCode>();
     public DbSet<PlatformSettings> PlatformSettings => Set<PlatformSettings>();
+    public DbSet<ExternalApiUsage> ExternalApiUsages => Set<ExternalApiUsage>();
     public DbSet<ConductorMercadoPago> ConductorMercadoPagos => Set<ConductorMercadoPago>();
     public DbSet<PricingConfig> PricingConfigs => Set<PricingConfig>();
     public DbSet<ReferencePrice> ReferencePrices => Set<ReferencePrice>();
@@ -220,6 +221,19 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<PlatformSettings>(e =>
+        {
+            e.Property(s => s.MapsPricePerThousandUsd).HasPrecision(8, 4);
+        });
+
+        builder.Entity<ExternalApiUsage>(e =>
+        {
+            e.HasIndex(u => new { u.Provider, u.Sku, u.CreatedAt });
+            e.Property(u => u.Provider).HasMaxLength(40);
+            e.Property(u => u.Sku).HasMaxLength(40);
+            e.Property(u => u.EstimatedCostUsd).HasPrecision(10, 6);
         });
 
         builder.Entity<ConductorMercadoPago>(e =>

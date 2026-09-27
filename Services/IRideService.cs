@@ -10,4 +10,5 @@ public interface IRideService
     Task<IReadOnlyList<RideDto>> GetMyRidesAsDriverAsync(Guid driverId);
     Task<RideDto> UpdateAsync(Guid driverId, Guid rideId, UpdateRideDto dto);
     Task CancelAsync(Guid driverId, Guid rideId);
+    Task<int> AdvanceStaleRideStatusesAsync();
 }

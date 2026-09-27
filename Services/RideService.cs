@@ -89,6 +89,8 @@ public class RideService : IRideService
 
     public async Task<RideDto> GetByIdAsync(Guid rideId)
     {
+        await AdvanceStaleRideStatusesAsync().ConfigureAwait(false);
+
         var ride = await _db.Rides
             .AsNoTracking()
             .Include(r => r.Driver)
@@ -103,6 +105,8 @@ public class RideService : IRideService
 
     public async Task<PagedResult<RideDto>> SearchAsync(RideSearchDto filters)
     {
+        await AdvanceStaleRideStatusesAsync().ConfigureAwait(false);
+
         var query = _db.Rides
             .AsNoTracking()
             .Include(r => r.Driver)
@@ -192,6 +196,8 @@ public class RideService : IRideService
 
     public async Task<IReadOnlyList<RideDto>> GetMyRidesAsDriverAsync(Guid driverId)
     {
+        await AdvanceStaleRideStatusesAsync().ConfigureAwait(false);
+
         var rides = await _db.Rides
             .AsNoTracking()
             .Include(r => r.Driver)
@@ -276,6 +282,66 @@ public class RideService : IRideService
         }
 
         await _db.SaveChangesAsync().ConfigureAwait(false);
+    }
+
+    public async Task<int> AdvanceStaleRideStatusesAsync()
+    {
+        var now = DateTime.UtcNow;
+        var openRides = await _db.Rides
+            .Where(r =>
+                r.Status == RideStatus.Active ||
+                r.Status == RideStatus.Full ||
+                r.Status == RideStatus.InProgress)
+            .ToListAsync()
+            .ConfigureAwait(false);
+
+        var changed = 0;
+        List<Guid>? completedIds = null;
+
+        foreach (var ride in openRides)
+        {
+            var next = RideLifecycleHelper.EffectiveStatus(ride, now);
+            if (next == ride.Status) continue;
+
+            ride.Status = next;
+            changed++;
+            if (next == RideStatus.Completed)
+            {
+                completedIds ??= new List<Guid>();
+                completedIds.Add(ride.Id);
+            }
+        }
+
+        if (completedIds is { Count: > 0 })
+        {
+            var reservations = await _db.Reservations
+                .Where(r => completedIds.Contains(r.RideId) &&
+                            (r.Status == ReservationStatus.Pending ||
+                             r.Status == ReservationStatus.Confirmed))
+                .ToListAsync()
+                .ConfigureAwait(false);
+
+            foreach (var reservation in reservations)
+            {
+                if (reservation.Status == ReservationStatus.Confirmed)
+                {
+                    reservation.Status = ReservationStatus.Completed;
+                }
+                else
+                {
+                    reservation.Status = ReservationStatus.Cancelled;
+                    reservation.CancelledAt = now;
+                    reservation.CancellationReason = "El viaje finalizó sin confirmar la reserva.";
+                }
+            }
+        }
+
+        if (changed > 0)
+        {
+            await _db.SaveChangesAsync().ConfigureAwait(false);
+        }
+
+        return changed;
     }
 
     private static List<RideStop> NormalizeStops(CreateRideDto dto)
@@ -431,7 +497,7 @@ public class RideService : IRideService
             AvailableSeats = r.AvailableSeats,
             PricePerSeat = r.PricePerSeat,
             TotalDistanceKm = r.TotalDistanceKm,
-            Status = r.Status.ToString(),
+            Status = RideLifecycleHelper.EffectiveStatus(r, DateTime.UtcNow).ToString(),
             Notes = r.Notes,
             AllowsPets = r.AllowsPets,
             AllowsSmoking = r.AllowsSmoking,

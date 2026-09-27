@@ -13,8 +13,13 @@ namespace SubiteAPI.Controllers;
 public class AdminSettingsController : ControllerBase
 {
     private readonly IPlatformSettingsService _settings;
+    private readonly IMapsDirectionsService _maps;
 
-    public AdminSettingsController(IPlatformSettingsService settings) => _settings = settings;
+    public AdminSettingsController(IPlatformSettingsService settings, IMapsDirectionsService maps)
+    {
+        _settings = settings;
+        _maps = maps;
+    }
 
     [HttpGet]
     public async Task<ActionResult<PlatformSettingsDto>> Get()
@@ -29,5 +34,19 @@ public class AdminSettingsController : ControllerBase
         var settings = await _settings.UpdateCommissionPercentAsync(dto.PlatformCommissionPercent)
             .ConfigureAwait(false);
         return Ok(settings);
+    }
+
+    [HttpGet("apis")]
+    public async Task<ActionResult<ExternalApiBudgetDto>> GetApis()
+    {
+        var budget = await _maps.GetBudgetAsync().ConfigureAwait(false);
+        return Ok(budget);
+    }
+
+    [HttpPut("apis")]
+    public async Task<ActionResult<ExternalApiBudgetDto>> UpdateApis([FromBody] UpdateExternalApiBudgetDto dto)
+    {
+        var budget = await _maps.UpdateBudgetAsync(dto).ConfigureAwait(false);
+        return Ok(budget);
     }
 }

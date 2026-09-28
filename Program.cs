@@ -109,6 +109,7 @@ builder.Services.AddHttpClient<IEmailService, EnvialoSimpleEmailService>((sp, ht
     var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<EnvialoSimpleOptions>>().Value;
     EnvialoSimpleEmailService.ConfigureHttpClient(http, options);
 });
+builder.Services.AddScoped<ITollSegmentService, TollSegmentService>();
 builder.Services.AddScoped<ITripPricingService, TripPricingService>();
 builder.Services.AddScoped<IPricingConfigService, PricingConfigService>();
 builder.Services.AddScoped<IReferencePriceService, ReferencePriceService>();

@@ -28,6 +28,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<ConductorMercadoPago> ConductorMercadoPagos => Set<ConductorMercadoPago>();
     public DbSet<PricingConfig> PricingConfigs => Set<PricingConfig>();
     public DbSet<ReferencePrice> ReferencePrices => Set<ReferencePrice>();
+    public DbSet<TollSegment> TollSegments => Set<TollSegment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -201,6 +202,16 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
         {
             e.Property(r => r.Price).HasPrecision(10, 2);
             e.HasIndex(r => new { r.OriginCity, r.DestinationCity, r.TransportMode });
+        });
+
+        builder.Entity<TollSegment>(e =>
+        {
+            e.Property(s => s.Corridor).HasMaxLength(40);
+            e.Property(s => s.FromCity).HasMaxLength(120);
+            e.Property(s => s.ToCity).HasMaxLength(120);
+            e.Property(s => s.Label).HasMaxLength(160);
+            e.Property(s => s.Amount).HasPrecision(10, 2);
+            e.HasIndex(s => new { s.Corridor, s.Sequence });
         });
 
         builder.Entity<PasswordResetCode>(e =>

@@ -16,6 +16,7 @@ public interface IAdminPanelService
     Task<AdminPagedResultDto<AdminViajeDto>> GetViajesAsync(string? query, string? estado, int page, int pageSize);
     Task CancelarViajeAsync(Guid rideId, string? reason);
     Task<AdminPagedResultDto<AdminReservaDto>> GetReservasAsync(string? query, string? estado, int page, int pageSize);
+    Task<AdminGananciasDto> GetGananciasAsync(int days = 30);
     Task<AdminPagedResultDto<AdminLogDto>> GetLogsAsync(string? query, int page, int pageSize);
 }
 
@@ -271,6 +272,10 @@ public class AdminPanelService : IAdminPanelService
                 PasajeroEmail = r.Passenger.Email ?? string.Empty,
                 Asientos = r.SeatsReserved,
                 Monto = r.Payment != null ? r.Payment.Amount : r.TotalPrice,
+                BaseViaje = r.TotalPrice,
+                Ganancia = r.Payment != null && r.Payment.Status == PaymentStatus.Approved
+                    ? Math.Max(0, r.Payment.Amount - r.TotalPrice)
+                    : 0,
                 Estado = r.Status.ToString(),
                 EstadoPago = r.Payment != null ? r.Payment.Status.ToString() : "SinPago",
                 Creada = r.CreatedAt
@@ -279,6 +284,76 @@ public class AdminPanelService : IAdminPanelService
             .ConfigureAwait(false);
 
         return Page(items, total, page, pageSize);
+    }
+
+    public async Task<AdminGananciasDto> GetGananciasAsync(int days = 30)
+    {
+        days = Math.Clamp(days, 1, 180);
+        var from = DateTime.UtcNow.Date.AddDays(1 - days);
+
+        var approved = await _db.Payments.AsNoTracking()
+            .Include(p => p.Reservation)
+            .ThenInclude(r => r.Ride)
+            .Where(p => p.Status == PaymentStatus.Approved && p.CreatedAt >= from)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync()
+            .ConfigureAwait(false);
+
+        var pagos = approved.Select(p =>
+        {
+            var baseViaje = p.Reservation?.TotalPrice ?? 0;
+            var ganancia = Math.Max(0, p.Amount - baseViaje);
+            var ride = p.Reservation?.Ride;
+            return new AdminGananciaPagoDto
+            {
+                Id = p.Id,
+                Ruta = ride == null ? "—" : $"{ride.OriginCity} → {ride.DestinationCity}",
+                Fecha = p.CreatedAt,
+                MontoPasajero = p.Amount,
+                BaseViaje = baseViaje,
+                Ganancia = ganancia,
+                Estado = p.Status.ToString()
+            };
+        }).ToList();
+
+        var totalGanancia = pagos.Sum(p => p.Ganancia);
+        var totalGmv = pagos.Sum(p => p.MontoPasajero);
+
+        var lookup = pagos
+            .GroupBy(p => p.Fecha.Date)
+            .ToDictionary(
+                g => g.Key,
+                g => new
+                {
+                    Ganancia = g.Sum(x => x.Ganancia),
+                    Gmv = g.Sum(x => x.MontoPasajero),
+                    Pagos = g.Count()
+                });
+
+        var series = new List<AdminGananciaSeriePointDto>();
+        for (var i = 0; i < days; i++)
+        {
+            var day = from.AddDays(i);
+            lookup.TryGetValue(day, out var point);
+            series.Add(new AdminGananciaSeriePointDto
+            {
+                Fecha = day.ToString("dd/MM"),
+                Ganancia = point?.Ganancia ?? 0,
+                Gmv = point?.Gmv ?? 0,
+                Pagos = point?.Pagos ?? 0
+            });
+        }
+
+        return new AdminGananciasDto
+        {
+            Days = days,
+            TotalGanancia = totalGanancia,
+            TotalGmv = totalGmv,
+            PagosOk = pagos.Count,
+            GananciaPromedio = pagos.Count == 0 ? 0 : Math.Round(totalGanancia / pagos.Count, 0),
+            Series = series,
+            Pagos = pagos.Take(40).ToList()
+        };
     }
 
     public async Task<AdminPagedResultDto<AdminLogDto>> GetLogsAsync(

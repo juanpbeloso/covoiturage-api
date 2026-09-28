@@ -2,6 +2,7 @@ using SubiteAPI.Exceptions;
 using SubiteAPI.Features.TripPricing.Domain;
 using SubiteAPI.Features.TripPricing.Domain.Models;
 using SubiteAPI.Features.TripPricing.Infrastructure.Repositories;
+using SubiteAPI.Services;
 
 namespace SubiteAPI.Features.TripPricing.Services;
 
@@ -15,15 +16,18 @@ public class TripPricingService : ITripPricingService
     private readonly IPricingConfigRepository _configRepo;
     private readonly IReferencePriceRepository _referenceRepo;
     private readonly PricingCalculator _calculator;
+    private readonly ITollSegmentService _tolls;
 
     public TripPricingService(
         IPricingConfigRepository configRepo,
         IReferencePriceRepository referenceRepo,
-        PricingCalculator calculator)
+        PricingCalculator calculator,
+        ITollSegmentService tolls)
     {
         _configRepo = configRepo;
         _referenceRepo = referenceRepo;
         _calculator = calculator;
+        _tolls = tolls;
     }
 
     public async Task<TripPricingResult> CalculateAsync(TripPricingRequest request)
@@ -65,6 +69,13 @@ public class TripPricingService : ITripPricingService
             request.OriginCity,
             request.DestinationCity,
             transportMode).ConfigureAwait(false);
+
+        if (request.TollCostTotal <= 0)
+        {
+            request.TollCostTotal = await _tolls
+                .ResolveAsync(request.OriginCity, request.DestinationCity)
+                .ConfigureAwait(false);
+        }
 
         return _calculator.Calculate(request, config, reference);
     }

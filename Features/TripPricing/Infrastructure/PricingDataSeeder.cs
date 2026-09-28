@@ -84,6 +84,61 @@ public static class PricingDataSeeder
             );
         }
 
+        if (!await db.TollSegments.AnyAsync().ConfigureAwait(false))
+        {
+            var now = DateTime.UtcNow;
+            db.TollSegments.AddRange(
+                new TollSegment
+                {
+                    Id = Guid.NewGuid(),
+                    Corridor = "RN7",
+                    FromCity = "Junín",
+                    ToCity = "Chacabuco",
+                    Label = "Peaje / tramo Junín → Chacabuco",
+                    Amount = 600,
+                    Sequence = 1,
+                    IsActive = true,
+                    UpdatedAt = now
+                },
+                new TollSegment
+                {
+                    Id = Guid.NewGuid(),
+                    Corridor = "RN7",
+                    FromCity = "Chacabuco",
+                    ToCity = "Carmen de Areco",
+                    Label = "Tramo Chacabuco → Carmen de Areco",
+                    Amount = 600,
+                    Sequence = 2,
+                    IsActive = true,
+                    UpdatedAt = now
+                },
+                new TollSegment
+                {
+                    Id = Guid.NewGuid(),
+                    Corridor = "RN7",
+                    FromCity = "Carmen de Areco",
+                    ToCity = "Luján",
+                    Label = "Tramo Carmen de Areco → Luján",
+                    Amount = 600,
+                    Sequence = 3,
+                    IsActive = true,
+                    UpdatedAt = now
+                },
+                new TollSegment
+                {
+                    Id = Guid.NewGuid(),
+                    Corridor = "RN7",
+                    FromCity = "Luján",
+                    ToCity = "Retiro",
+                    Label = "Acceso Oeste / Luján → CABA",
+                    Amount = 600,
+                    Sequence = 4,
+                    IsActive = true,
+                    UpdatedAt = now
+                }
+            );
+        }
+
         await db.SaveChangesAsync().ConfigureAwait(false);
     }
 }

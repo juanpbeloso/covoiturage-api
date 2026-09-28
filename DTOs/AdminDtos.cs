@@ -76,9 +76,41 @@ public class AdminReservaDto
     public string PasajeroEmail { get; set; } = string.Empty;
     public int Asientos { get; set; }
     public decimal Monto { get; set; }
+    public decimal BaseViaje { get; set; }
+    public decimal Ganancia { get; set; }
     public string Estado { get; set; } = string.Empty;
     public string EstadoPago { get; set; } = string.Empty;
     public DateTime Creada { get; set; }
+}
+
+public class AdminGananciaPagoDto
+{
+    public Guid Id { get; set; }
+    public string Ruta { get; set; } = string.Empty;
+    public DateTime Fecha { get; set; }
+    public decimal MontoPasajero { get; set; }
+    public decimal BaseViaje { get; set; }
+    public decimal Ganancia { get; set; }
+    public string Estado { get; set; } = string.Empty;
+}
+
+public class AdminGananciaSeriePointDto
+{
+    public string Fecha { get; set; } = string.Empty;
+    public decimal Ganancia { get; set; }
+    public decimal Gmv { get; set; }
+    public int Pagos { get; set; }
+}
+
+public class AdminGananciasDto
+{
+    public int Days { get; set; }
+    public decimal TotalGanancia { get; set; }
+    public decimal TotalGmv { get; set; }
+    public int PagosOk { get; set; }
+    public decimal GananciaPromedio { get; set; }
+    public IReadOnlyList<AdminGananciaSeriePointDto> Series { get; set; } = Array.Empty<AdminGananciaSeriePointDto>();
+    public IReadOnlyList<AdminGananciaPagoDto> Pagos { get; set; } = Array.Empty<AdminGananciaPagoDto>();
 }
 
 public class AdminLogDto
